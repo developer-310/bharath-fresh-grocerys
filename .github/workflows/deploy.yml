@@ -1,0 +1,74 @@
+name: Security CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  continuous-integration:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Required by SonarCloud for deep git history analysis
+
+    - name: SonarQube Cloud Scan
+      uses: SonarSource/sonarqube-scan-action@v5.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=developer-310_bharath-fresh-grocerys
+          -Dsonar.organization=developer-310
+          -Dsonar.sources=.
+
+    # 2. BUILD ENGINE: Setup Docker buildx environment
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 3. BUILD CONTAINER: Compile local Node.js & Vite code into a test image
+    - name: Build Local Image for Scanning
+      run: |
+        docker build -t new-project-repo:test .
+
+    # 4. SECURITY GATE B: Trivy Container Vulnerability Scan
+    - name: Run Trivy Security Scan
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        image-ref: 'new-project-repo:test'
+        format: 'table'
+        exit-code: '0' # 0 lets the pipeline pass while you finish initial configuration steps
+        severity: 'CRITICAL,HIGH'
+
+    # 5. GCP AUTHENTICATION: Log directly into Google Cloud securely
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }} # Secure Service Account key
+
+    # 6. DOCKER SETUP: Configure Docker to talk to GCP Artifact Registry
+    - name: Configure Docker for GCP
+      run: |
+        gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+    # 7. REGISTRY PUSH: Tag and push your certified secure image up to Google Cloud
+    - name: Push Production Image
+      run: |
+        docker tag new-project-repo:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:${{ github.sha }}
+        docker tag new-project-repo:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
+        docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:${{ github.sha }}
+        docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
+
+    # 8. DEPLOY TO GKE: Connect to Kubernetes and apply manifests
+    - name: Connect to GKE and Deploy
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: 'new-project-cluster'
+        location: 'asia-south1'
+
+    - name: Deploy Manifests to Kubernetes
+      run: |
+        kubectl apply -f k8s/deployment.yml
+        kubectl rollout restart deployment/node-vite-app

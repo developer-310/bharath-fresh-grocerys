@@ -1,0 +1,29 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+web_runtime/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production build outputs
+dist/
+build/
+
+# Terraform State and Cache
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
+
+# Local Environment & Cloud Secret Keys
+.env
+.env.local
+.env.production
+gcp-key.json
+*.pem
+*.key

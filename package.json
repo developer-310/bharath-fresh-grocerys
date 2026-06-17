@@ -1,0 +1,39 @@
+{
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0"
+  },
+  "name": "bharath-fresh-grocerys",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "browserslist": "^4.28.2",
+    "node-releases": "^2.0.47",
+    "baseline-browser-mapping": "^2.10.34",
+    "escalade": "^3.2.0",
+    "nanoid": "^3.3.12",
+    "caniuse-lite": "^1.0.30001797",
+    "electron-to-chromium": "^1.5.368",
+    "picocolors": "^1.1.1",
+    "source-map-js": "^1.2.1",
+    "fraction.js": "^5.3.4",
+    "postcss-value-parser": "^4.2.0",
+    "update-browserslist-db": "^1.2.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prudhviraj310/bharath-fresh-grocerys.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prudhviraj310/bharath-fresh-grocerys/issues"
+  },
+  "homepage": "https://github.com/prudhviraj310/bharath-fresh-grocerys#readme",
+  "description": ""
+}
