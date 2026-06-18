@@ -38,6 +38,7 @@ spec:
 
 ---
 # ==========================================
+# # ==========================================
 # 2. BACKEND API CONFIGURATION
 # ==========================================
 apiVersion: apps/v1
@@ -47,7 +48,7 @@ metadata:
   labels:
     app: node-backend-app
 spec:
-  replicas: 2 # Highly available backend pods
+  replicas: 2 
   selector:
     matchLabels:
       app: node-backend-app
@@ -60,17 +61,15 @@ spec:
       - name: backend-container
         image: asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:latest
         ports:
-        - containerPort: 8080 # Matches your backend EXPOSE 8080 port
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: node-backend-service
-spec:
-  type: ClusterIP # SECURE: This ensures your backend is hidden from the public internet!
-  selector:
-    app: node-backend-app
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "YOUR_PUBLIC_IP_HERE"  # 👈 Put your public IP address here!
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "Prudhviraj@310"
+        - name: DB_NAME
+          value: "bharath_fresh_db"
+        - name: JWT_SECRET
+          value: "BHARATH_SECRET_KEY"
