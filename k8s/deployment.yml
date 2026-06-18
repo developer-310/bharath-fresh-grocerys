@@ -23,19 +23,19 @@ spec:
         ports:
         - containerPort: 5000  # UPDATED: Matches your app's actual operational port 5000
 ---
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-vite-service
+  name: node-backend-service
 spec:
-  type: LoadBalancer # Publicly accessible IP for your users
+  type: LoadBalancer # 🛠️ CHANGED from ClusterIP so your browser can reach it
   selector:
-    app: node-vite-app
+    app: node-backend-app
   ports:
     - protocol: TCP
-      port: 80         # Keep this 80 so you can access via http://34.47.150.233 without typing a port
-      targetPort: 5000 # UPDATED: Forwards public port 80 traffic to port 5000 inside your pods
-
+      port: 8080
+      targetPort: 8080
 ---
 # ==========================================
 # # ==========================================
