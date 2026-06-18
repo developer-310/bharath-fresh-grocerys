@@ -1,3 +1,6 @@
+# ==========================================
+# 1. FRONTEND APP CONFIGURATION
+# ==========================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,7 +8,7 @@ metadata:
   labels:
     app: node-vite-app
 spec:
-  replicas: 2 # Runs two copies of your app for high availability
+  replicas: 2
   selector:
     matchLabels:
       app: node-vite-app
@@ -16,22 +19,58 @@ spec:
     spec:
       containers:
       - name: app-container
-        # Targets your brand-new Artifact Registry path
         image: asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
         ports:
-        - containerPort: 3000
+        - containerPort: 80  # Matches Nginx port
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: node-vite-service
 spec:
-  type: LoadBalancer # Automatically provisions a public Google IP address
+  type: LoadBalancer # Publicly accessible IP for your users
   selector:
     app: node-vite-app
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 3000
+      targetPort: 80
 
-      # prudhvi
+---
+# ==========================================
+# 2. BACKEND API CONFIGURATION
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-backend-app
+  labels:
+    app: node-backend-app
+spec:
+  replicas: 2 # Highly available backend pods
+  selector:
+    matchLabels:
+      app: node-backend-app
+  template:
+    metadata:
+      labels:
+        app: node-backend-app
+    spec:
+      containers:
+      - name: backend-container
+        image: asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:latest
+        ports:
+        - containerPort: 8080 # Matches your backend EXPOSE 8080 port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-backend-service
+spec:
+  type: ClusterIP # SECURE: This ensures your backend is hidden from the public internet!
+  selector:
+    app: node-backend-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

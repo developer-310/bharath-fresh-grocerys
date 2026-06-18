@@ -28,40 +28,68 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    # 3. BUILD CONTAINER: Compile local Node.js & Vite code into a test image
-    - name: Build Local Image for Scanning
+    # ==========================================
+    # 3. FRONTEND: Build & Security Scan
+    # ==========================================
+    - name: Build Frontend Image for Scanning
       run: |
-        docker build -t new-project-repo:test .
+        docker build -t node-vite-app:test .
 
-    # 4. SECURITY GATE B: Trivy Container Vulnerability Scan
-    - name: Run Trivy Security Scan
+    - name: Run Trivy Frontend Security Scan
       uses: aquasecurity/trivy-action@v0.36.0
       with:
-        image-ref: 'new-project-repo:test'
+        image-ref: 'node-vite-app:test'
         format: 'table'
-        exit-code: '0' # 0 lets the pipeline pass while you finish initial configuration steps
+        exit-code: '0'
         severity: 'CRITICAL,HIGH'
 
-    # 5. GCP AUTHENTICATION: Log directly into Google Cloud securely
+    # ==========================================
+    # 4. BACKEND: Build & Security Scan
+    # ==========================================
+    - name: Build Backend Image for Scanning
+      run: |
+        docker build -t node-backend-app:test ./backend
+
+    - name: Run Trivy Backend Security Scan
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        image-ref: 'node-backend-app:test'
+        format: 'table'
+        exit-code: '0'
+        severity: 'CRITICAL,HIGH'
+
+    # ==========================================
+    # 5. GCP AUTHENTICATION & DOCKER SETUP
+    # ==========================================
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ secrets.GCP_SA_KEY }} # Secure Service Account key
 
-    # 6. DOCKER SETUP: Configure Docker to talk to GCP Artifact Registry
     - name: Configure Docker for GCP
       run: |
         gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
-    # 7. REGISTRY PUSH: Tag and push your certified secure image up to Google Cloud
-    - name: Push Production Image
+    # ==========================================
+    # 6. REGISTRY PUSH: Frontend & Backend Images
+    # ==========================================
+    - name: Push Frontend Production Image
       run: |
-        docker tag new-project-repo:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:${{ github.sha }}
-        docker tag new-project-repo:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
+        docker tag node-vite-app:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:${{ github.sha }}
+        docker tag node-vite-app:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
         docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:${{ github.sha }}
         docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-vite-app:latest
 
-    # 8. DEPLOY TO GKE: Connect to Kubernetes and apply manifests
+    - name: Push Backend Production Image
+      run: |
+        docker tag node-backend-app:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:${{ github.sha }}
+        docker tag node-backend-app:test asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:latest
+        docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:${{ github.sha }}
+        docker push asia-south1-docker.pkg.dev/practiceproject-495412/new-project-repo/node-backend-app:latest
+
+    # ==========================================
+    # 7. DEPLOY TO GKE: Apply Combined Manifest
+    # ==========================================
     - name: Connect to GKE and Deploy
       uses: google-github-actions/get-gke-credentials@v2
       with:
@@ -72,3 +100,4 @@ jobs:
       run: |
         kubectl apply -f k8s/deployment.yml
         kubectl rollout restart deployment/node-vite-app
+        kubectl rollout restart deployment/node-backend-app
