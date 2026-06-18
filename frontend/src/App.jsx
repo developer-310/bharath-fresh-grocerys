@@ -214,8 +214,7 @@ export default function App() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
 
   // Point directly to your live Google Cloud Run Backend API instance
-  const API_BASE = 'https://bharath-fresh-backend-k5mcg6xp7q-ue.a.run.app/api';
-
+const API_BASE = 'http://34.100.220.23:8080/api';
   useEffect(() => {
     fetch(`${API_BASE}/products`)
       .then(res => res.json())
