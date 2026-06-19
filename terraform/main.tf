@@ -12,7 +12,7 @@ provider "google" {
   region  = "asia-south1"
 }
 
-# New project network layout
+# VPC and Subnet
 resource "google_compute_network" "main_vpc" {
   name                    = "new-project-vpc"
   auto_create_subnetworks = false
@@ -25,9 +25,23 @@ resource "google_compute_subnetwork" "private_subnet" {
   ip_cidr_range = "10.0.0.0/24"
 }
 
+# PRIVATE SERVICE ACCESS (Required for Private GKE to talk to Cloud SQL)
+resource "google_compute_global_address" "private_ip_address" {
+  name          = "private-ip-address"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = google_compute_network.main_vpc.id
+}
+
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = google_compute_network.main_vpc.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
+}
+
 resource "google_artifact_registry_repository" "backend_repo" {
   location      = "asia-south1"
   repository_id = "new-project-repo"
-  description   = "Docker registry for the new GitHub Actions pipeline"
   format        = "DOCKER"
 }

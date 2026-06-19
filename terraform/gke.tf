@@ -1,8 +1,9 @@
 resource "google_container_cluster" "primary" {
   name     = "new-project-cluster"
   location = "asia-south1"
-
-  deletion_protection = false # Safe for clean teardowns later
+  
+  # Ensure networking is set up before GKE creation
+  depends_on = [google_service_networking_connection.private_vpc_connection]
 
   network    = google_compute_network.main_vpc.id
   subnetwork = google_compute_subnetwork.private_subnet.id
@@ -30,13 +31,6 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     machine_type = "e2-medium"
-    disk_size_gb = 30
-    disk_type    = "pd-standard"
-
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/devstorage.read_only"
-    ]
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 }
